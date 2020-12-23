@@ -1,4 +1,5 @@
 # stdlib
+from typing import Any
 from typing import Any as TypeAny
 from typing import List as TypeList
 from typing import Tuple as TypeTuple
@@ -7,17 +8,17 @@ from typing import Union
 # syft relative
 from . import attribute  # noqa: F401
 from . import callable  # noqa: F401
-from . import function  # noqa: F401
 from . import globals  # noqa: F401
 from . import klass  # noqa: F401
-from . import method  # noqa: F401
 from . import module  # noqa: F401
+from . import property  # noqa: F401
 
 
-def get_parent(path: str, root: TypeAny) -> module.Module:
+def get_parent(path: str, root: globals.Globals) -> module.Module:
     parent = root
     for step in path.split(".")[:-1]:
-        parent = parent.attrs[step]
+        if step in parent.attrs:
+            parent = parent.attrs[step]
     return parent
 
 
@@ -37,16 +38,17 @@ def add_modules(
         parent.add_attr(
             attr_name=attr_name,
             attr=module.Module(
-                name=attr_name,
                 path_and_name=target_module,
-                ref=ref,
+                object_ref=None,
                 return_type_name="",
+                client=ast.client,
             ),
         )
 
 
 def add_classes(
-    ast: globals.Globals, paths: TypeList[TypeTuple[str, str, TypeAny]]
+    ast: globals.Globals,
+    paths: TypeList[TypeTuple[str, str, TypeAny]],
 ) -> None:
     for path, return_type, ref in paths:
         parent = get_parent(path, ast)
@@ -54,18 +56,23 @@ def add_classes(
         parent.add_attr(
             attr_name=attr_name,
             attr=klass.Class(
-                name=attr_name,
                 path_and_name=path,
-                ref=ref,
+                object_ref=ref,
                 return_type_name=return_type,
+                client=ast.client,
             ),
         )
 
 
-def add_methods(ast: globals.Globals, paths: TypeList[TypeTuple[str, str]]) -> None:
+def add_methods(
+    ast: globals.Globals,
+    paths: TypeList[TypeTuple[str, str]],
+) -> None:
     for path, return_type in paths:
         parent = get_parent(path, ast)
         path_list = path.split(".")
         parent.add_path(
-            path=path_list, index=len(path_list) - 1, return_type_name=return_type
+            path=path_list,
+            index=len(path_list) - 1,
+            return_type_name=return_type,
         )

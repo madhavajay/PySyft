@@ -17,7 +17,7 @@ import pandas as pd
 # syft relative
 from ....core.pointer.pointer import Pointer
 from ....decorators import syft_decorator
-from ....lib import lib_ast
+from ....lib import create_lib_ast
 from ....proto.core.node.common.client_pb2 import Client as Client_PB
 from ....proto.core.node.common.metadata_pb2 import Metadata as Metadata_PB
 from ....util import get_fully_qualified_name
@@ -113,26 +113,8 @@ class Client(AbstractNodeClient):
         meta = _deserialize(blob=metadata)
         return meta.node, meta.name, meta.id
 
-    def add_attr(self, attr_name: str, attr: Any) -> None:
-        # this can be called any time after startup to add additional libs
-        # bind this client to the ast sub tree
-        attr.set_client(self)
-
-        # attach this sub tree to the main ast tree
-        self.lib_ast.attrs[attr_name] = attr
-
-        # make sure that the lib attr_name is available at the top level of the client
-        # so you can do: client.package.class.method
-        setattr(self, attr_name, attr)
-
-    def install_supported_frameworks(self, lib_ast: Any) -> None:
-        # we create an initial copy of the startup AST
-        # this re-executes all the create_ast functions just for this client
-        self.lib_ast = lib_ast.copy()
-
-        # first time we want to register for future updates
-        lib_ast.register_updates(self)
-
+    def install_supported_frameworks(self) -> None:
+        self.lib_ast = create_lib_ast(self)
         if self.lib_ast is not None:
             for attr_name, attr in self.lib_ast.attrs.items():
                 # add the lib and bind it

@@ -18,6 +18,7 @@ from .namedtuple import ValuesIndicesWrapper
 from .none import SyNone
 from .none import _SyNone
 from .primitive_container import Any
+from .primitive_factory import isprimitive
 from .primitive_interface import PyPrimitive
 from .protobuf import GenerateProtobufWrapper  # noqa: 401
 from .set import Set
@@ -43,8 +44,8 @@ for syft_type in [
     syft_type.__module__ = __name__
 
 
-def create_python_ast() -> Globals:
-    ast = Globals()
+def create_python_ast(client=None) -> Globals:
+    ast = Globals(client)
 
     modules = ["syft", "syft.lib", "syft.lib.python", "syft.lib.python.collections"]
     classes = [
@@ -88,7 +89,6 @@ def create_python_ast() -> Globals:
         ("syft.lib.python.List.__imul__", "syft.lib.python.List"),
         ("syft.lib.python.List.__iadd__", "syft.lib.python.List"),
         ("syft.lib.python.List.__contains__", "syft.lib.python.Bool"),
-        ("syft.lib.python.List.__delattr__", "syft.lib.python.None"),
         ("syft.lib.python.List.__delitem__", "syft.lib.python.None"),
         ("syft.lib.python.List.__eq__", "syft.lib.python.Bool"),
         ("syft.lib.python.List.__mul__", "syft.lib.python.List"),
@@ -110,6 +110,7 @@ def create_python_ast() -> Globals:
         ("syft.lib.python.List.extend", "syft.lib.python._SyNone"),
         ("syft.lib.python.List.__reversed__", "syft.lib.python.Iterator"),
         ("syft.lib.python.List.__delitem__", "syft.lib.python._SyNone"),
+        ("syft.lib.python.List.test", "syft.lib.python.Int"),
         # Bool methods - quite there
         ("syft.lib.python.Bool.__abs__", "syft.lib.python.Int"),
         ("syft.lib.python.Bool.__eq__", "syft.lib.python.Bool"),
@@ -200,6 +201,8 @@ def create_python_ast() -> Globals:
         ("syft.lib.python.Float.__ipow__", "syft.lib.python.Float"),
         ("syft.lib.python.Float.__pos__", "syft.lib.python.Float"),
         ("syft.lib.python.Float.conjugate", "syft.lib.python.Float"),
+        ("syft.lib.python.Float.imag", "syft.lib.python.Int"),
+        ("syft.lib.python.Float.real", "syft.lib.python.Float"),
         # String Methods
         ("syft.lib.python.String.__add__", "syft.lib.python.String"),
         ("syft.lib.python.String.__contains__", "syft.lib.python.Bool"),
@@ -218,7 +221,6 @@ def create_python_ast() -> Globals:
         ("syft.lib.python.String.__ne__", "syft.lib.python.Bool"),
         ("syft.lib.python.String.__reversed__", "syft.lib.python.String"),
         ("syft.lib.python.String.__sizeof__", "syft.lib.python.Int"),
-        ("syft.lib.python.String.__str__", "syft.lib.python.String"),
         ("syft.lib.python.String.capitalize", "syft.lib.python.String"),
         ("syft.lib.python.String.casefold", "syft.lib.python.String"),
         ("syft.lib.python.String.center", "syft.lib.python.String"),

@@ -6,6 +6,7 @@ from typing import Union
 from ..misc.union import UnionGenerator
 
 allowlist: Dict[str, Union[str, Dict[str, str]]] = {}  # (path: str, return_type:type)
+fallback: Dict[str, str] = {}
 
 # --------------------------------------------------------------------------------------
 # SECTION - Tensor methods which are intentionally disabled
@@ -74,12 +75,16 @@ allowlist: Dict[str, Union[str, Dict[str, str]]] = {}  # (path: str, return_type
 # allowlist["torch.Tensor.to_mkldnn"] = SERDE WARNING: DO NOT ADD TO ALLOW LIST
 # allowlist["torch.Tensor.to_sparse"] = SERDE WARNING: DO NOT ADD TO ALLOW LIST
 
+
 # --------------------------------------------------------------------------------------
 # SECTION - Tensor methods which are tested
 # --------------------------------------------------------------------------------------
 
 
 # SECTION - The capital Tensor constructors
+# allowlist["torch.__version__"] = "syft.lib.python.String"
+# allowlist["torch.Tensor.retain_graph"] = "syft.lib.python.Bool"
+
 allowlist["torch.Tensor"] = "torch.Tensor"
 allowlist["torch.BFloat16Tensor"] = "torch.Tensor"
 allowlist["torch.BoolTensor"] = "torch.Tensor"
@@ -1704,6 +1709,8 @@ allowlist[
 allowlist["torch.nn.Module.extra_repr"] = "syft.lib.python.String"
 
 allowlist["torch.nn.Conv2d"] = "torch.nn.Conv2d"
+fallback["torch.nn.modules.conv.Conv2d"] = "torch.nn.Conv2d"
+
 allowlist["torch.nn.Conv2d.__call__"] = "torch.Tensor"
 allowlist["torch.nn.Conv2d.parameters"] = "syft.lib.python.List"
 allowlist["torch.nn.Conv2d.train"] = "torch.nn.Conv2d"

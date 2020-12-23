@@ -10,7 +10,7 @@ import torch
 from . import parameter  # noqa: 401
 from . import uppercase_tensor  # noqa: 401
 from ...ast.globals import Globals
-from .allowlist import allowlist
+from .allowlist import allowlist, fallback
 
 TORCH_VERSION = version.parse(torch.__version__.split("+")[0])
 
@@ -38,8 +38,8 @@ def version_supported(support_dict: Union[str, Dict[str, str]]) -> bool:
         return True
 
 
-def create_torch_ast() -> Globals:
-    ast = Globals()
+def create_torch_ast(client=None) -> Globals:
+    ast = Globals(client)
 
     # most methods work in all versions and have a single return type
     # for the more complicated ones we pass a dict with keys like return_type and
@@ -64,6 +64,19 @@ def create_torch_ast() -> Globals:
             pass
             # TODO: Replace with logging
             # print(f"Skipping {method} not supported in {TORCH_VERSION}")
+
+    for method, location in fallback.items():
+        target_node = ast.query(location)
+        prefix_path = ".".join(method.split(".")[:-1])
+        name = method.split(".")[-1]
+
+        ast.add_path(
+            path=prefix_path,
+            framework_reference=torch,
+        )
+
+        end_node = ast.query(prefix_path)
+        end_node.attrs[name] = target_node
 
     for klass in ast.classes:
         klass.create_pointer_class()

@@ -1,19 +1,16 @@
 # stdlib
-import importlib
-import sys
-from typing import Any as TypeAny
-from typing import Dict as TypeDict
-
-# third party
-from packaging import version
+from typing import Any
+from typing import Optional
 
 # syft relative
 from ..ast.globals import Globals
 from ..lib.python import create_python_ast
 from ..lib.torch import create_torch_ast
 from ..lib.torchvision import create_torchvision_ast
+from .misc import create_scope_ast
 from .misc import create_union_ast
 
+registered_callbacks = {}
 
 class VendorLibraryImportException(Exception):
     pass
@@ -77,10 +74,13 @@ def load_lib(lib: str, options: TypeDict[str, TypeAny] = {}) -> None:
 
 
 # now we need to load the relevant frameworks onto the node
-def create_lib_ast() -> Globals:
-    lib_ast = Globals()
+def create_lib_ast(client: Optional[Any]) -> Globals:
+    python_ast = create_python_ast(client=client)
+    torch_ast = create_torch_ast(client=client)
+    torchvision_ast = create_torchvision_ast(client=client)
+    # numpy_ast = create_numpy_ast()
 
-    python_ast = create_python_ast()
+    lib_ast = Globals(client=client)
     lib_ast.add_attr(attr_name="syft", attr=python_ast.attrs["syft"])
 
     torch_ast = create_torch_ast()
@@ -88,15 +88,20 @@ def create_lib_ast() -> Globals:
 
     torchvision_ast = create_torchvision_ast()
     lib_ast.add_attr(attr_name="torchvision", attr=torchvision_ast.attrs["torchvision"])
+
+    for elem_name, callback in registered_callbacks.items():
+        lib_ast.add_attr(attr_name=elem_name, attr=callback(client).attrs[elem_name])
+
     # let the misc creation be always the last, as it needs the full ast solved
     # to properly generated unions
-    misc_ast = getattr(getattr(create_union_ast(lib_ast), "syft"), "lib")
+    union_misc_ast = getattr(getattr(create_union_ast(lib_ast, client), "syft"), "lib")
+    scope_misc_ast = getattr(getattr(create_scope_ast(client), "syft"), "lib")
     misc_root = getattr(getattr(lib_ast, "syft"), "lib")
+    misc_root.add_attr(attr_name="misc", attr=union_misc_ast.attrs["misc"])
+    misc_root.misc.add_attr(attr_name="scope", attr=scope_misc_ast.misc.attrs["scope"])
 
     misc_root.add_attr(attr_name="misc", attr=misc_ast.attrs["misc"])
     return lib_ast
 
 
-# constructor: copyType = create_lib_ast
-lib_ast = create_lib_ast()
-lib_ast._copy = create_lib_ast
+lib_ast = create_lib_ast(None)

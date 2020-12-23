@@ -235,10 +235,12 @@ class Float(float, PyPrimitive):
             value=super().__pow__(other), id=self.id
         )
 
+    @property
     @syft_decorator(typechecking=True, prohibit_args=False)
     def real(self) -> SyPrimitiveRet:
         return PrimitiveFactory.generate_primitive(value=super().real)
 
+    @property
     @syft_decorator(typechecking=True, prohibit_args=False)
     def imag(self) -> SyPrimitiveRet:
         return PrimitiveFactory.generate_primitive(value=super().imag)
