@@ -1,6 +1,13 @@
 # stdlib
+import importlib
+import sys
 from typing import Any
+from typing import Any as TypeAny
+from typing import Dict as TypeDict
 from typing import Optional
+
+# third party
+from packaging import version
 
 # syft relative
 from ..ast.globals import Globals
@@ -11,6 +18,7 @@ from .misc import create_scope_ast
 from .misc import create_union_ast
 
 registered_callbacks = {}
+
 
 class VendorLibraryImportException(Exception):
     pass
@@ -100,7 +108,6 @@ def create_lib_ast(client: Optional[Any]) -> Globals:
     misc_root.add_attr(attr_name="misc", attr=union_misc_ast.attrs["misc"])
     misc_root.misc.add_attr(attr_name="scope", attr=scope_misc_ast.misc.attrs["scope"])
 
-    misc_root.add_attr(attr_name="misc", attr=misc_ast.attrs["misc"])
     return lib_ast
 
 

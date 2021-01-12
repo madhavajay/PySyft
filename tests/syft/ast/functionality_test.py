@@ -4,12 +4,10 @@ into our AST and use them.
 """
 # syft absolute
 import syft
+from syft import test_module
 from syft.ast.globals import Globals
 from syft.lib import create_lib_ast
 from syft.lib import registered_callbacks
-
-# syft relative
-from syft import test_module
 
 
 def create_AST(client):
@@ -17,12 +15,12 @@ def create_AST(client):
 
     methods = [
         ("test_module.A", "test_module.A"),
-        ("test_module.A.test_method", "syft.lib.python.Int"),
+        # ("test_module.A.test_method", "syft.lib.python.Int"),
         ("test_module.A.test_property", "syft.lib.python.Float"),
-        ("test_module.A._private_attr", "syft.lib.python.Float"),
-        ("test_module.A.static_method", "syft.lib.python.Float"),
+        # ("test_module.A._private_attr", "syft.lib.python.Float"),
+        # ("test_module.A.static_method", "syft.lib.python.Float"),
         ("test_module.A.static_attr", "syft.lib.python.Int"),
-        ("test_module.B.Car", "test_module.B"),
+        # ("test_module.B.Car", "test_module.B"),
         # ("test_module.global_value", "syft.lib.python.Int"),
         # ("test_module.global_function", "syft.lib.python.Int"),
     ]
@@ -58,6 +56,7 @@ def test_method():
     result = a.test_method()
 
     assert result == result_ptr.get()
+
 
 def test_property_get():
     client = get_custom_client()
@@ -122,7 +121,6 @@ def test_global_function():
     assert result == result_ptr.get()
 
 
-
 def test_global_attribute_get():
     client = get_custom_client()
 
@@ -132,7 +130,6 @@ def test_global_attribute_get():
     result = test_module.global_value
 
     assert result == result_ptr.get()
-
 
 
 def test_global_attribute_set():
@@ -150,10 +147,11 @@ def test_static_method():
 
     result_ptr = client.test_module.A.static_method()
     result = test_module.A.static_method()
-    print(result)
     assert result == result_ptr.get()
 
+
 test_static_method()
+
 
 def test_static_attribute_get():
     client = get_custom_client()
@@ -162,6 +160,7 @@ def test_static_attribute_get():
     result = test_module.A.static_attr
 
     assert result == result_ptr.get()
+
 
 def test_static_attribute_set():
     value_to_set = 5
@@ -176,7 +175,6 @@ def test_static_attribute_set():
     assert result == result_ptr.get()
 
 
-
 def test_enum():
     client = get_custom_client()
 
@@ -184,6 +182,7 @@ def test_enum():
     result = test_module.B.Car
 
     assert result == result_ptr.get()
+
 
 def test_dynamic_attribute():
     pass

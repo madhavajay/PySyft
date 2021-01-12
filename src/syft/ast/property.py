@@ -22,7 +22,6 @@ class Property(ast.attribute.Attribute):
             client=client,
         )
 
-        # TODO: do this
         self.is_static = False
 
     def __call__(self, *args, **kwargs):

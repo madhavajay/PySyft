@@ -10,7 +10,8 @@ import torch
 from . import parameter  # noqa: 401
 from . import uppercase_tensor  # noqa: 401
 from ...ast.globals import Globals
-from .allowlist import allowlist, fallback
+from .allowlist import allowlist
+from .allowlist import fallback
 
 TORCH_VERSION = version.parse(torch.__version__.split("+")[0])
 

@@ -15,6 +15,7 @@ from ..core.node.common.action.function_or_constructor_action import (
     RunFunctionOrConstructorAction,
 )
 
+
 class Callable(ast.attribute.Attribute):
     """A method, function, or constructor which can be directly executed"""
 
@@ -24,7 +25,7 @@ class Callable(ast.attribute.Attribute):
         object_ref: Optional[Any] = None,
         return_type_name: Optional[str] = None,
         client: Optional[Any] = None,
-        is_static: Optional[bool] = False
+        is_static: Optional[bool] = False,
     ):
         super().__init__(
             path_and_name=path_and_name,
@@ -34,7 +35,6 @@ class Callable(ast.attribute.Attribute):
         )
 
         self.is_static = is_static
-
 
     def __call__(
         self,
@@ -66,7 +66,7 @@ class Callable(ast.attribute.Attribute):
                     kwargs=pointer_kwargs,
                     id_at_location=ptr.id_at_location,
                     address=self.client.address,
-                    is_static=self.is_static
+                    is_static=self.is_static,
                 )
 
                 self.client.send_immediate_msg_without_reply(msg=msg)

@@ -12,7 +12,7 @@ from . import globals  # noqa: F401
 from . import klass  # noqa: F401
 from . import module  # noqa: F401
 from . import property  # noqa: F401
-
+from . import static_attr # noqa: F401
 
 def get_parent(path: str, root: globals.Globals) -> module.Module:
     parent = root

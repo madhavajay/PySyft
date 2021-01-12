@@ -10,7 +10,7 @@ from typing import Union
 from .. import ast
 
 
-class Attribute(ABC):
+class Attribute:
     __slots__ = [
         "path_and_name",
         "object_ref",
@@ -92,6 +92,7 @@ class Attribute(ABC):
         if _path[0] in self.attrs:
             return self.attrs[_path[0]].query(path=_path[1:])
 
+        print(_path)
         raise ValueError(f"Path {'.'.join(path)} not present in the AST.")
 
     @property

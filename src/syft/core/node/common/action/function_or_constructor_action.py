@@ -47,7 +47,7 @@ class RunFunctionOrConstructorAction(ImmediateActionWithoutReply):
         id_at_location: UID,
         address: Address,
         msg_id: Optional[UID] = None,
-        is_static: Optional[bool] = False
+        is_static: Optional[bool] = False,
     ):
         super().__init__(address=address, msg_id=msg_id)
         self.path = path

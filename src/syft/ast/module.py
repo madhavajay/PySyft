@@ -11,6 +11,7 @@ from typing import Union
 from .. import ast
 from ..ast.callable import Callable
 
+
 def is_static_method(host_object, attr):
     """Test if a value of a class is static method.
 
@@ -140,7 +141,7 @@ class Module(ast.attribute.Attribute):
                         object_ref=attr_ref,
                         return_type_name=return_type_name,
                         client=self.client,
-                        is_static=is_static
+                        is_static=is_static,
                     ),
                 )
             elif inspect.isdatadescriptor(attr_ref):
@@ -158,7 +159,9 @@ class Module(ast.attribute.Attribute):
                     # syft absolute
                     from syft.lib.misc.scope import Scope
 
-                    scope, scope_name = Scope.from_qualname(".".join(path[:-1]), self.object_ref)
+                    scope, scope_name = Scope.from_qualname(
+                        ".".join(path[:-1]), self.object_ref
+                    )
                     path.insert(len(path) - 1, "globals")
 
                     self.add_attr(

@@ -18,6 +18,7 @@ import pandas as pd
 from ....core.pointer.pointer import Pointer
 from ....decorators import syft_decorator
 from ....lib import create_lib_ast
+from ....lib import lib_ast
 from ....proto.core.node.common.client_pb2 import Client as Client_PB
 from ....proto.core.node.common.metadata_pb2 import Metadata as Metadata_PB
 from ....util import get_fully_qualified_name
@@ -81,7 +82,7 @@ class Client(AbstractNodeClient):
         else:
             self.verify_key = verify_key
 
-        self.install_supported_frameworks(lib_ast=lib_ast)
+        self.install_supported_frameworks()
 
         self.store = StoreClient(client=self)
 
@@ -115,19 +116,20 @@ class Client(AbstractNodeClient):
 
     def install_supported_frameworks(self) -> None:
         self.lib_ast = create_lib_ast(self)
+
         if self.lib_ast is not None:
             for attr_name, attr in self.lib_ast.attrs.items():
-                # add the lib and bind it
-                self.add_attr(attr_name=attr_name, attr=attr)
+                setattr(self, attr_name, attr)
 
         # shortcut syft.lib.python to just python
         if hasattr(self.lib_ast, "syft"):
             try:
                 lib_attr = getattr(self.lib_ast.syft, "lib", None)
+
                 if lib_attr is not None:
                     python_attr = getattr(lib_attr, "python", None)
-                    if python_attr is not None:
-                        self.add_attr(attr_name="python", attr=python_attr)
+                    setattr(self, "python", python_attr)
+
             except Exception as e:
                 print(f"Failed to set python attribute on client. {e}")
 

@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-rm -rf "${CLEAN}"
+#rm -rf "${CLEAN}"
 find ${PROTO_IN} -name "*.proto" -print0 | xargs -0 protoc --python_out=${PYTHON_OUT}
 
 # no easy way to do -i replace on both MacOS and Linux

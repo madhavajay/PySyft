@@ -191,6 +191,7 @@ def wrap_len(attrs: Dict[str, Union[str, CallableT]]) -> None:
     attrs[attr_name] = wrap_len(len_func)
 
 
+
 class Class(Callable):
     def __init__(
         self,
@@ -265,7 +266,13 @@ class Class(Callable):
         setattr(self, self.pointer_name, klass_pointer)
 
     def create_send_method(outer_self: Any) -> None:
-        def send(self: Any, client: Any, searchable: bool = False) -> Pointer:
+        def send(
+            self: Any,
+            client: Any,
+            searchable: bool = False,
+            description: str = "",
+            tags: List[str] = [],
+        ) -> Pointer:
             # we need to generate an ID now because we removed the generic ID creation
             id_at_location = UID()
 
@@ -280,10 +287,13 @@ class Class(Callable):
             if searchable:
                 ptr.gc_enabled = False
 
+            self.tags = tags
+            self.description = description
+
             # Step 2: create message which contains object to send
             obj_msg = SaveObjectAction(
                 id_at_location=ptr.id_at_location,
-                obj=which_obj,
+                obj=self,
                 address=client.address,
                 anyone_can_search_for_this=searchable,
             )
@@ -347,7 +357,7 @@ class Class(Callable):
         if index >= len(path) or path[index] in self.attrs:
             return
 
-        attr_ref = getattr(self.object_ref, path[index], None)
+        attr_ref = getattr(self.object_ref, path[index])
 
         # TODO: create separate functions
         if (
@@ -357,11 +367,7 @@ class Class(Callable):
             or inspect.ismethoddescriptor(attr_ref)
         ):
             super().add_path(path, index, return_type_name)
-        elif (
-            inspect.isdatadescriptor(attr_ref)
-            or inspect.isgetsetdescriptor(attr_ref)
-            or attr_ref is None
-        ):
+        elif inspect.isdatadescriptor(attr_ref) or inspect.isgetsetdescriptor(attr_ref):
 
             self.attrs[path[index]] = ast.property.Property(
                 path_and_name=".".join(path[: index + 1]),
@@ -369,19 +375,41 @@ class Class(Callable):
                 return_type_name=return_type_name,
                 client=self.client,
             )
-        else:
-            pass
-            # raise Exception("Cannot attach ref to the AST.")
+        elif not callable(attr_ref):
+             static_attribute = ast.static_attr.StaticAttribute(
+                path_and_name=".".join(path[: index + 1]),
+                return_type_name=return_type_name,
+                client=self.client,
+                parent=self
+             )
+             setattr(self, path[index], static_attribute)
+             self.attrs[path[index]] = static_attribute
+
+    def __getattribute__(self, item):
+        target_object = super().__getattribute__(item)
+        try:
+            if isinstance(target_object, ast.static_attr.StaticAttribute):
+                return target_object.get_remote_value()
+        except Exception as e:
+            print("IN CRUCEA MATII")
+            print(e)
+        return target_object
 
     def __getattr__(self, item):
-        if hasattr(super(), item):
-            return super().__getattribute__(item)
+        attrs = super().__getattribute__("attrs")
+        return attrs[item] if item in attrs else None
 
-        if item in self.attrs:
-            return self.attrs[item]
 
-        raise ValueError("MAKE PROPER SCHEMA")
+    def __setattr__(self, key, value):
+        already_existing_object = getattr(self, key, None)
 
+        if already_existing_object is None:
+            return super().__setattr__(key, value)
+
+        if isinstance(already_existing_object, ast.static_attr.StaticAttribute):
+            return already_existing_object.set_remote_value(value)
+
+        return super().__setattr__(key, value)
 
 def pointerize_args_and_kwargs(
     args: Union[List[Any], Tuple[Any, ...]], kwargs: Dict[Any, Any], client: Any

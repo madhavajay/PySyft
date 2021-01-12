@@ -49,7 +49,7 @@ class RunClassMethodAction(ImmediateActionWithoutReply):
         id_at_location: UID,
         address: Address,
         msg_id: Optional[UID] = None,
-        is_static: Optional[bool] = False
+        is_static: Optional[bool] = False,
     ):
         self.path = path
         self._self = _self
@@ -121,7 +121,6 @@ class RunClassMethodAction(ImmediateActionWithoutReply):
                 result_read_permissions, r_arg.read_permissions
             )
             resolved_kwargs[arg_name] = r_arg.data
-
 
         (
             upcasted_args,
