@@ -7,6 +7,7 @@ from typing import Union
 # syft relative
 from . import attribute  # noqa: F401
 from . import callable  # noqa: F401
+from . import enum  # noqa: F401
 from . import globals  # noqa: F401
 from . import klass  # noqa: F401
 from . import module  # noqa: F401

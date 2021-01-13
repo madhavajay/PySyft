@@ -5,10 +5,12 @@ from typing import Optional
 from typing import Union
 
 # syft relative
-from .. import lib
 from .. import ast
+from .. import lib
 from ..core.node.common.action.get_or_set_static_attribute_action import (
     GetSetStaticAttributeAction,
+)
+from ..core.node.common.action.get_or_set_static_attribute_action import (
     StaticAttributeAction,
 )
 

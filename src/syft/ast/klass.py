@@ -205,7 +205,6 @@ class Class(Callable):
             return_type_name=return_type_name,
             client=client,
         )
-
         if self.path_and_name is not None:
             self.pointer_name = self.path_and_name.split(".")[-1] + "Pointer"
 
@@ -356,9 +355,13 @@ class Class(Callable):
         if index >= len(path) or path[index] in self.attrs:
             return
 
+        # stdlib
+        from enum import Enum, EnumMeta
+
         attr_ref = getattr(self.object_ref, path[index])
 
-        # TODO: create separate functions
+        class_is_enum = isinstance(self.object_ref, EnumMeta)
+
         if (
             inspect.isfunction(attr_ref)
             or inspect.isbuiltin(attr_ref)
@@ -366,8 +369,17 @@ class Class(Callable):
             or inspect.ismethoddescriptor(attr_ref)
         ):
             super().add_path(path, index, return_type_name)
-        elif inspect.isdatadescriptor(attr_ref) or inspect.isgetsetdescriptor(attr_ref):
+        if isinstance(attr_ref, Enum) and class_is_enum:
+            enum_attribute = ast.enum.EnumAttribute(
+                path_and_name=".".join(path[: index + 1]),
+                return_type_name=return_type_name,
+                client=self.client,
+                parent=self,
+            )
+            setattr(self, path[index], enum_attribute)
+            self.attrs[path[index]] = enum_attribute
 
+        elif inspect.isdatadescriptor(attr_ref) or inspect.isgetsetdescriptor(attr_ref):
             self.attrs[path[index]] = ast.property.Property(
                 path_and_name=".".join(path[: index + 1]),
                 object_ref=attr_ref,
@@ -385,27 +397,33 @@ class Class(Callable):
             self.attrs[path[index]] = static_attribute
 
     def __getattribute__(self, item):
-        target_object = super().__getattribute__(item)
+
         try:
+            target_object = super().__getattribute__(item)
+
             if isinstance(target_object, ast.static_attr.StaticAttribute):
                 return target_object.get_remote_value()
+
+            if isinstance(target_object, ast.enum.EnumAttribute):
+                return target_object.get_remote_enum_attribute()
+
+            return target_object
         except Exception as e:
             print("IN CRUCEA MATII")
             print(e)
-        return target_object
+            raise e
 
     def __getattr__(self, item):
         attrs = super().__getattribute__("attrs")
         return attrs[item] if item in attrs else None
 
     def __setattr__(self, key, value):
-        already_existing_object = getattr(self, key, None)
-
-        if already_existing_object is None:
-            return super().__setattr__(key, value)
-
-        if isinstance(already_existing_object, ast.static_attr.StaticAttribute):
-            return already_existing_object.set_remote_value(value)
+        if hasattr(super(), "attrs"):
+            attrs = super().__getattribute__("attrs")
+            if key in attrs:
+                target_object = self.attrs[key]
+                if isinstance(target_object, ast.static_attr.StaticAttribute):
+                    return target_object.set_remote_value(value)
 
         return super().__setattr__(key, value)
 

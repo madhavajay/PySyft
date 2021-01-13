@@ -7,8 +7,8 @@ from ...ast import add_classes
 from ...ast import add_methods
 from ...ast import add_modules
 from ...ast.globals import Globals
-from ..misc.union import UnionGenerator
 from ...core.node.abstract.node import AbstractNodeClient
+from ..misc.union import UnionGenerator
 from .bool import Bool
 from .complex import Complex
 from .dict import Dict
