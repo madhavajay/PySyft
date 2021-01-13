@@ -1,6 +1,9 @@
 # stdlib
 from typing import Any
+from typing import Callable as CallableT
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
 # syft relative
 from .. import ast
@@ -24,7 +27,11 @@ class Property(ast.attribute.Attribute):
 
         self.is_static = False
 
-    def __call__(self, *args, **kwargs):
+    def __call__(
+        self,
+        *args: Tuple[Any, ...],
+        **kwargs: Any,
+    ) -> Optional[Union[Any, CallableT]]:
         if hasattr(self, "client") and self.client is not None:
             return_tensor_type_pointer_type = self.client.lib_ast.query(
                 path=self.return_type_name

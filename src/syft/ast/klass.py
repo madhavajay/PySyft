@@ -191,7 +191,6 @@ def wrap_len(attrs: Dict[str, Union[str, CallableT]]) -> None:
     attrs[attr_name] = wrap_len(len_func)
 
 
-
 class Class(Callable):
     def __init__(
         self,
@@ -376,14 +375,14 @@ class Class(Callable):
                 client=self.client,
             )
         elif not callable(attr_ref):
-             static_attribute = ast.static_attr.StaticAttribute(
+            static_attribute = ast.static_attr.StaticAttribute(
                 path_and_name=".".join(path[: index + 1]),
                 return_type_name=return_type_name,
                 client=self.client,
-                parent=self
-             )
-             setattr(self, path[index], static_attribute)
-             self.attrs[path[index]] = static_attribute
+                parent=self,
+            )
+            setattr(self, path[index], static_attribute)
+            self.attrs[path[index]] = static_attribute
 
     def __getattribute__(self, item):
         target_object = super().__getattribute__(item)
@@ -399,7 +398,6 @@ class Class(Callable):
         attrs = super().__getattribute__("attrs")
         return attrs[item] if item in attrs else None
 
-
     def __setattr__(self, key, value):
         already_existing_object = getattr(self, key, None)
 
@@ -410,6 +408,7 @@ class Class(Callable):
             return already_existing_object.set_remote_value(value)
 
         return super().__setattr__(key, value)
+
 
 def pointerize_args_and_kwargs(
     args: Union[List[Any], Tuple[Any, ...]], kwargs: Dict[Any, Any], client: Any

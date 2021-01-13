@@ -1,9 +1,11 @@
 # stdlib
 from abc import ABC
 from typing import Any
+from typing import Callable as CallableT
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 # syft relative
@@ -34,12 +36,15 @@ class Attribute:
         self.return_type_name = return_type_name
         self.client = client
 
-    def __call__(self, *args, **kwargs):
+    def __call__(
+        self, *args: Tuple[Any, ...], **kwargs: Any
+    ) -> Optional[Union[Any, CallableT]]:
         raise NotImplementedError
 
     def _extract_attr_type(
         self,
         container: Union[
+            List["ast.property.Property"],
             List["ast.klass.Class"],
             List["ast.module.Module"],
         ],
@@ -83,7 +88,7 @@ class Attribute:
         self._extract_attr_type(out, "properties")
         return out
 
-    def query(self, path: Union[List[str], str]):
+    def query(self, path: Union[List[str], str]) -> "Attribute":
         _path: List[str] = path if isinstance(path, list) else path.split(".")
 
         if len(_path) == 0:
@@ -96,7 +101,7 @@ class Attribute:
         raise ValueError(f"Path {'.'.join(path)} not present in the AST.")
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.path_and_name.rsplit(".", maxsplit=1)[-1]
 
     def add_path(self, *args, **kwargs):

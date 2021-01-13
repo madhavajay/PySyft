@@ -82,7 +82,7 @@ def load_lib(lib: str, options: TypeDict[str, TypeAny] = {}) -> None:
 
 
 # now we need to load the relevant frameworks onto the node
-def create_lib_ast(client: Optional[Any]) -> Globals:
+def create_lib_ast(client: Optional[Any] = None) -> Globals:
     python_ast = create_python_ast(client=client)
     torch_ast = create_torch_ast(client=client)
     torchvision_ast = create_torchvision_ast(client=client)

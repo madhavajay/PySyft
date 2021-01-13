@@ -22,8 +22,10 @@ from ....store.storeable_object import StorableObject
 from ...abstract.node import AbstractNode
 from .run_class_method_action import RunClassMethodAction
 from .common import ImmediateActionWithoutReply
-from .....proto.core.node.common.action.get_set_static_attribute_pb2 import \
-    GetSetStaticAttributeAction as GetSetStaticAttributeAction_PB
+from .....proto.core.node.common.action.get_set_static_attribute_pb2 import (
+    GetSetStaticAttributeAction as GetSetStaticAttributeAction_PB,
+)
+
 
 class StaticAttributeAction(Enum):
     SET = 1
@@ -101,7 +103,7 @@ class GetSetStaticAttributeAction(ImmediateActionWithoutReply):
             object.
         """
 
-        #this is ugly
+        # this is ugly
         if self.set_arg is not None:
             return GetSetStaticAttributeAction_PB(
                 path=self.path,
@@ -109,7 +111,7 @@ class GetSetStaticAttributeAction(ImmediateActionWithoutReply):
                 address=self.address.serialize(),
                 msg_id=self.id.serialize(),
                 action=self.action.value,
-                set_arg=self.set_arg.serialize()
+                set_arg=self.set_arg.serialize(),
             )
         else:
             return GetSetStaticAttributeAction_PB(
@@ -121,7 +123,9 @@ class GetSetStaticAttributeAction(ImmediateActionWithoutReply):
             )
 
     @staticmethod
-    def _proto2object(proto: GetSetStaticAttributeAction_PB) -> "GetSetStaticAttributeAction":
+    def _proto2object(
+        proto: GetSetStaticAttributeAction_PB,
+    ) -> "GetSetStaticAttributeAction":
         """Creates a ObjectWithID from a protobuf
         As a requirement of all objects which inherit from Serializable,
         this method transforms a protobuf object into an instance of this class.
@@ -136,7 +140,9 @@ class GetSetStaticAttributeAction(ImmediateActionWithoutReply):
             id_at_location=_deserialize(blob=proto.id_at_location),
             address=_deserialize(blob=proto.address),
             msg_id=_deserialize(blob=proto.msg_id),
-            set_arg=_deserialize(blob=proto.set_arg) if proto.HasField("set_arg") else None,
+            set_arg=_deserialize(blob=proto.set_arg)
+            if proto.HasField("set_arg")
+            else None,
             action=StaticAttributeAction(proto.action),
         )
 

@@ -6,21 +6,22 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Tuple
+import inspect
 
 scopes_cache = {}
 
 
-def generate_property(module, property_name):
-    def prop(self):
+def generate_property(module: Any, property_name: str) -> property:
+    def prop(self: Any) -> Any:
         return getattr(module, property_name)
 
-    def getter(self):
+    def getter(self: Any) -> Any:
         return getattr(module, property_name)
 
-    def setter(self, elem):
+    def setter(self: Any, elem: Any) -> None:
         setattr(module, property_name, elem)
 
-    def deleter(self):
+    def deleter(self: Any) -> None:
         obj = getattr(module, property_name)
         del obj
 

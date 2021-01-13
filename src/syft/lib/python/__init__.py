@@ -1,3 +1,6 @@
+# stdlib
+from typing import Optional
+
 # syft relative
 from . import collections
 from ...ast import add_classes
@@ -5,6 +8,7 @@ from ...ast import add_methods
 from ...ast import add_modules
 from ...ast.globals import Globals
 from ..misc.union import UnionGenerator
+from ...core.node.abstract.node import AbstractNodeClient
 from .bool import Bool
 from .complex import Complex
 from .dict import Dict
@@ -18,7 +22,6 @@ from .namedtuple import ValuesIndicesWrapper
 from .none import SyNone
 from .none import _SyNone
 from .primitive_container import Any
-from .primitive_factory import isprimitive
 from .primitive_interface import PyPrimitive
 from .protobuf import GenerateProtobufWrapper  # noqa: 401
 from .set import Set
@@ -44,7 +47,7 @@ for syft_type in [
     syft_type.__module__ = __name__
 
 
-def create_python_ast(client=None) -> Globals:
+def create_python_ast(client: Optional[AbstractNodeClient] = None) -> Globals:
     ast = Globals(client)
 
     modules = ["syft", "syft.lib", "syft.lib.python", "syft.lib.python.collections"]

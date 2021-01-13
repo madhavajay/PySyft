@@ -7,7 +7,6 @@ def test_path_cache() -> None:
     long_fqn_list = "syft.lib.python.list.List"
 
     list_ref1 = sy.lib_ast.query(short_fqn_list)
-
     list_ref2 = sy.lib_ast.query(long_fqn_list)
 
     assert list_ref1.ref == sy.lib.python.List

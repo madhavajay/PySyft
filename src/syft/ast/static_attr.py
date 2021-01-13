@@ -8,8 +8,10 @@ from typing import Union
 from .. import lib
 from .. import ast
 from ..core.node.common.action.get_or_set_static_attribute_action import (
-    GetSetStaticAttributeAction, StaticAttributeAction
+    GetSetStaticAttributeAction,
+    StaticAttributeAction,
 )
+
 
 class StaticAttribute(ast.attribute.Attribute):
     """A method, function, or constructor which can be directly executed"""
@@ -42,7 +44,7 @@ class StaticAttribute(ast.attribute.Attribute):
             path=self.path_and_name,
             id_at_location=ptr.id_at_location,
             address=self.client.address,
-            action=StaticAttributeAction.GET
+            action=StaticAttributeAction.GET,
         )
         self.client.send_immediate_msg_without_reply(msg=msg)
         return ptr
@@ -53,9 +55,8 @@ class StaticAttribute(ast.attribute.Attribute):
     def solve_set_value(self, set_value):
         setattr(self.parent.object_ref, self.path_and_name.rsplit(".")[-1], set_value)
 
-
     def set_remote_value(self, set_arg: Any):
-        resolved_pointer_type =  self.client.lib_ast.query(self.return_type_name)
+        resolved_pointer_type = self.client.lib_ast.query(self.return_type_name)
         result = resolved_pointer_type.pointer_type(client=self.client)
         result_id_at_location = getattr(result, "id_at_location", None)
 
@@ -67,12 +68,14 @@ class StaticAttribute(ast.attribute.Attribute):
             id_at_location=result_id_at_location,
             address=self.client.address,
             action=StaticAttributeAction.SET,
-            set_arg=downcasted_set_arg_ptr
+            set_arg=downcasted_set_arg_ptr,
         )
         self.client.send_immediate_msg_without_reply(msg=cmd)
         return result
 
-    def __call__(self, action: StaticAttributeAction) -> Optional[Union["Callable", CallableT]]:
+    def __call__(
+        self, action: StaticAttributeAction
+    ) -> Optional[Union["Callable", CallableT]]:
         raise ValueError("MAKE PROPER SCHEMA, THIS SHOULD NEVER BE CALLED")
 
     def add_path(self, *args, **kwargs):
