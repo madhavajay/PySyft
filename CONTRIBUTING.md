@@ -79,6 +79,7 @@ Before you get started you will need a few things installed depending on your op
 We intend to provide first class support for dev setup in the current versions of:
 
 - 🐧 Ubuntu
+- 🐧 Arch
 - 🍎 MacOS
 - 💠 Windows
 
