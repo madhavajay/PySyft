@@ -13,6 +13,7 @@ from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
 import names
 import pandas as pd
+<<<<<<< HEAD
 from pandas import DataFrame
 
 # syft absolute
@@ -25,6 +26,12 @@ from ....core.common.serde.serialize import _serialize as serialize  # noqa: F40
 from ....core.io.location.specific import SpecificLocation
 from ....core.node.common.action.exception_action import ExceptionMessage
 from ....core.pointer.pointer import Pointer
+=======
+
+# syft relative
+from ....core.adp.adversarial_accountant import AdversarialAccountant
+from ....core.adp.approximate_budget import ApproximateBudget
+>>>>>>> eada1c34f... Add a first example of smpc tensor
 from ....logger import traceback_and_raise
 from ....util import validate_field
 from ...common.uid import UID
@@ -299,6 +306,8 @@ class DomainClient(Client):
         )
 
         self.requests = RequestQueueClient(client=self)
+
+        self.accountant = AdversarialAccountant()
         self.post_init()
 
         self.groups = GroupRequestAPI(node=self)
@@ -368,6 +377,20 @@ class DomainClient(Client):
     def id(self) -> UID:
         return self.domain.id
 
+    # # TODO: @Madhava make work
+    # @property
+    # def accountant(self):
+    #     """Queries some service that returns a pointer to the ONLY real accountant for this
+    #     user that actually affects object permissions when used in a .publish() method. Other accountant
+    #     objects might exist in the object store but .publish() is just for simulation and won't change
+    #     the permissions on the object it's called on."""
+
+    # # TODO: @Madhava make work
+    # def create_simulated_accountant(self, init_with_budget_remaining=True):
+    #     """Creates an accountant in the remote store. If init_with_budget_remaining=True then the accountant
+    #     is a copy of an existing accountant. If init_with_budget_remaining=False then it is a fresh accountant
+    #     with the sam max budget."""
+
     @property
     def device(self) -> Optional[Location]:
         """This client points to a node, if that node lives within a device
@@ -422,6 +445,7 @@ class DomainClient(Client):
                     state[tag] = ptr
         return self.store.pandas
 
+<<<<<<< HEAD
     def load_dataset(self, assets: Any, **metadata):
         # relative
         from ....lib.python.util import downcast
@@ -434,3 +458,7 @@ class DomainClient(Client):
         self.datasets.create_syft(
             dataset=binary_dataset, metadata=metadata, platform="syft"
         )
+=======
+    def budget(self, spend_epsilon: bool = False) -> ApproximateBudget:
+        return ApproximateBudget()
+>>>>>>> eada1c34f... Add a first example of smpc tensor
