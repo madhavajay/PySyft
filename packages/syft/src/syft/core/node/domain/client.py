@@ -13,7 +13,6 @@ from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
 import names
 import pandas as pd
-<<<<<<< HEAD
 from pandas import DataFrame
 
 # syft absolute
@@ -26,12 +25,6 @@ from ....core.common.serde.serialize import _serialize as serialize  # noqa: F40
 from ....core.io.location.specific import SpecificLocation
 from ....core.node.common.action.exception_action import ExceptionMessage
 from ....core.pointer.pointer import Pointer
-=======
-
-# syft relative
-from ....core.adp.adversarial_accountant import AdversarialAccountant
-from ....core.adp.approximate_budget import ApproximateBudget
->>>>>>> eada1c34f... Add a first example of smpc tensor
 from ....logger import traceback_and_raise
 from ....util import validate_field
 from ...common.uid import UID
@@ -445,7 +438,6 @@ class DomainClient(Client):
                     state[tag] = ptr
         return self.store.pandas
 
-<<<<<<< HEAD
     def load_dataset(self, assets: Any, **metadata):
         # relative
         from ....lib.python.util import downcast
@@ -458,7 +450,3 @@ class DomainClient(Client):
         self.datasets.create_syft(
             dataset=binary_dataset, metadata=metadata, platform="syft"
         )
-=======
-    def budget(self, spend_epsilon: bool = False) -> ApproximateBudget:
-        return ApproximateBudget()
->>>>>>> eada1c34f... Add a first example of smpc tensor
