@@ -14,6 +14,9 @@ _sym_db = _symbol_database.Default()
 
 
 # syft absolute
+from syft.proto.core.common import (
+    common_object_pb2 as proto_dot_core_dot_common_dot_common__object__pb2,
+)
 from syft.proto.lib.numpy import array_pb2 as proto_dot_lib_dot_numpy_dot_array__pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -22,8 +25,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     syntax="proto3",
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
-    serialized_pb=b'\n\x1eproto/core/tensor/tensor.proto\x12\x10syft.core.tensor\x1a\x1bproto/lib/numpy/array.proto"\x9d\x01\n\x06Tensor\x12\x10\n\x08obj_type\x18\x02 \x01(\t\x12\x13\n\x0buse_tensors\x18\x04 \x01(\x08\x12*\n\x06\x61rrays\x18\x05 \x03(\x0b\x32\x1a.syft.lib.numpy.NumpyProto\x12)\n\x07tensors\x18\x06 \x03(\x0b\x32\x18.syft.core.tensor.Tensor\x12\x15\n\rrequires_grad\x18\x07 \x01(\x08\x62\x06proto3',
+    serialized_pb=b'\n\x1eproto/core/tensor/tensor.proto\x12\x10syft.core.tensor\x1a%proto/core/common/common_object.proto\x1a\x1bproto/lib/numpy/array.proto"\x8b\x01\n\x06Tensor\x12\x13\n\x0buse_tensors\x18\x01 \x01(\x08\x12*\n\x06\x61rrays\x18\x02 \x03(\x0b\x32\x1a.syft.lib.numpy.NumpyProto\x12)\n\x07tensors\x18\x03 \x03(\x0b\x32\x18.syft.core.tensor.Tensor\x12\x15\n\rrequires_grad\x18\x04 \x01(\x08\x62\x06proto3',
     dependencies=[
+        proto_dot_core_dot_common_dot_common__object__pb2.DESCRIPTOR,
         proto_dot_lib_dot_numpy_dot_array__pb2.DESCRIPTOR,
     ],
 )
@@ -38,29 +42,10 @@ _TENSOR = _descriptor.Descriptor(
     create_key=_descriptor._internal_create_key,
     fields=[
         _descriptor.FieldDescriptor(
-            name="obj_type",
-            full_name="syft.core.tensor.Tensor.obj_type",
-            index=0,
-            number=2,
-            type=9,
-            cpp_type=9,
-            label=1,
-            has_default_value=False,
-            default_value=b"".decode("utf-8"),
-            message_type=None,
-            enum_type=None,
-            containing_type=None,
-            is_extension=False,
-            extension_scope=None,
-            serialized_options=None,
-            file=DESCRIPTOR,
-            create_key=_descriptor._internal_create_key,
-        ),
-        _descriptor.FieldDescriptor(
             name="use_tensors",
             full_name="syft.core.tensor.Tensor.use_tensors",
-            index=1,
-            number=4,
+            index=0,
+            number=1,
             type=8,
             cpp_type=7,
             label=1,
@@ -78,8 +63,8 @@ _TENSOR = _descriptor.Descriptor(
         _descriptor.FieldDescriptor(
             name="arrays",
             full_name="syft.core.tensor.Tensor.arrays",
-            index=2,
-            number=5,
+            index=1,
+            number=2,
             type=11,
             cpp_type=10,
             label=3,
@@ -97,8 +82,8 @@ _TENSOR = _descriptor.Descriptor(
         _descriptor.FieldDescriptor(
             name="tensors",
             full_name="syft.core.tensor.Tensor.tensors",
-            index=3,
-            number=6,
+            index=2,
+            number=3,
             type=11,
             cpp_type=10,
             label=3,
@@ -116,8 +101,8 @@ _TENSOR = _descriptor.Descriptor(
         _descriptor.FieldDescriptor(
             name="requires_grad",
             full_name="syft.core.tensor.Tensor.requires_grad",
-            index=4,
-            number=7,
+            index=3,
+            number=4,
             type=8,
             cpp_type=7,
             label=1,
@@ -141,8 +126,8 @@ _TENSOR = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=82,
-    serialized_end=239,
+    serialized_start=121,
+    serialized_end=260,
 )
 
 _TENSOR.fields_by_name[
