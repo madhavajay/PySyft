@@ -9,6 +9,7 @@ import numpy as np
 # syft absolute
 from syft.core.tensor.passthrough import PassthroughTensor
 
+# relative
 # syft relative
 from ...core.common.serde.serializable import Serializable
 from ...proto.core.tensor.fixed_precision_tensor_pb2 import (
