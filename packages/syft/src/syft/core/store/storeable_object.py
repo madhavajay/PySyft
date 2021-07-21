@@ -1,5 +1,7 @@
 # stdlib
-from typing import Any, List, Optional
+from typing import Any
+from typing import List
+from typing import Optional
 
 # third party
 from google.protobuf.reflection import GeneratedProtocolMessageType
@@ -10,9 +12,12 @@ import syft as sy
 # relative
 from ...logger import traceback_and_raise
 from ...proto.core.store.store_object_pb2 import StorableObject as StorableObject_PB
-from ...util import get_fully_qualified_name, index_syft_by_module_name, key_emoji
+from ...util import get_fully_qualified_name
+from ...util import index_syft_by_module_name
+from ...util import key_emoji
 from ..common.serde.deserialize import _deserialize
-from ..common.serde.serializable import Serializable, bind_protobuf
+from ..common.serde.serializable import Serializable
+from ..common.serde.serializable import bind_protobuf
 from ..common.storeable_object import AbstractStorableObject
 from ..common.uid import UID
 

@@ -1,14 +1,14 @@
 # third party
 from raven import Client
+
+# syft absolute
+from syft import deserialize
 from syft.core.common.message import SignedImmediateSyftMessageWithoutReply
 
 # grid absolute
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.node import node
-
-# syft absolute
-from syft import deserialize
 
 client_sentry = Client(settings.SENTRY_DSN)
 

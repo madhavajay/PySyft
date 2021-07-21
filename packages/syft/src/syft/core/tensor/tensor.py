@@ -4,11 +4,10 @@ from __future__ import annotations
 # stdlib
 from typing import Any
 
-import numpy as np
-import torch as th
-
 # third party
 from google.protobuf.reflection import GeneratedProtocolMessageType
+import numpy as np
+import torch as th
 
 # relative
 # syft relative
