@@ -10,11 +10,15 @@ from typing import Optional
 # third party
 import requests
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
 # relative
 from ...core.common.environment import is_jupyter
 from ...core.node.common.client import Client
+from ...core.node.common.node_service.node_setup.node_setup_messages import (
+    CreateInitialSetUpMessage,
+)
 from ...core.node.common.node_table import Base
 from ...core.node.common.node_table.utils import seed_db
 from ...core.node.domain.domain import Domain
@@ -30,6 +34,19 @@ from .om_signaling_client import WebRTC_HOST
 from .om_signaling_client import register
 from .ui import LOGO_URL
 from .webrtc_duet import Duet as WebRTCDuet  # noqa: F811
+
+# add backend app to import path
+base_dir = os.path.dirname(__file__)
+sys.path.insert(
+    0, os.path.abspath(os.path.join(base_dir, "../../../../../grid/backend/app"))
+)
+
+# grid absolute
+from app import crud
+from app import schemas
+from app.core.config import settings
+
+SQLALCHEMY_DATABASE_URI = os.environ["SQLALCHEMY_DATABASE_URI"]
 
 if is_jupyter:
     # third party
@@ -213,16 +230,18 @@ def launch_duet(
 
     info("♫♫♫ > " + bcolors.OKGREEN + "DONE!" + bcolors.ENDC, print=True)
 
-    db_engine = create_engine("sqlite://", echo=False)
+    db_engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=False)
     Base.metadata.create_all(db_engine)  # type: ignore
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session_db = SessionLocal()
     my_domain = Domain(name="Launcher", db_engine=db_engine)
 
     if len(my_domain.setup):  # Check if setup was defined previously
         my_domain.name = my_domain.setup.node_name
 
     if not len(my_domain.roles):  # Check if roles were registered previously
-        seed_db(SessionLocal())
+        seed_db(session_db)
+    init_db(db=session_db, node=my_domain)
 
     if loopback:
         credential_exchanger = OpenGridTokenFileExchanger()
@@ -246,6 +265,35 @@ def launch_duet(
     info(print=True)
 
     return out_duet
+
+
+def init_db(db: Session, node: Domain) -> None:
+    # Tables should be created with Alembic migrations
+    # But if you don't want to use migrations, create
+    # the tables un-commenting the next line
+    # Base.metadata.create_all(bind=engine)
+
+    # Build Syft Message
+    msg = CreateInitialSetUpMessage(
+        address=node.address,
+        name="Jane Doe",
+        email=settings.FIRST_SUPERUSER,
+        password=settings.FIRST_SUPERUSER_PASSWORD,
+        domain_name=settings.DOMAIN_NAME,
+        reply_to=node.address,
+    ).sign(signing_key=node.signing_key)
+
+    # Process syft message
+    _ = node.recv_immediate_msg_with_reply(msg=msg).message
+
+    user = crud.user.get_by_email(db, email=settings.FIRST_SUPERUSER)
+    if not user:
+        user_in = schemas.UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        user = crud.user.create(db, obj_in=user_in)  # noqa: F841
 
 
 def join_duet(
@@ -288,16 +336,19 @@ def join_duet(
 
     info("♫♫♫ > " + bcolors.OKGREEN + "DONE!" + bcolors.ENDC, print=True)
 
-    db_engine = create_engine("sqlite://", echo=False)
+    db_engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=False)
     Base.metadata.create_all(db_engine)  # type: ignore
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
+    session_db = SessionLocal()
     my_domain = Domain(name="Joiner", db_engine=db_engine)
 
     if len(my_domain.setup):  # Check if setup was defined previously
         my_domain.name = my_domain.setup.node_name
 
     if not len(my_domain.roles):  # Check if roles were registered previously
-        seed_db(SessionLocal())
+        seed_db(session_db)
+
+    init_db(db=session_db, node=my_domain)
 
     if loopback:
         credential_exchanger = OpenGridTokenFileExchanger()
