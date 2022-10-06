@@ -2,6 +2,7 @@
 from getpass import getpass
 import json
 import logging
+import os
 import sys
 import time
 from typing import Dict
@@ -24,13 +25,14 @@ from ...core.io.route import SoloRoute
 from ...core.node.common.client import Client
 from ...core.node.domain_client import DomainClient
 from ...core.node.network_client import NetworkClient
-from ...util import verify_tls
+from ...telemetry import instrument
 from .grid_connection import GridHTTPConnection
 
 DEFAULT_PYGRID_PORT = 80
 DEFAULT_PYGRID_ADDRESS = f"http://127.0.0.1:{DEFAULT_PYGRID_PORT}"
 
 
+@instrument
 def connect(
     url: Union[str, GridURL] = DEFAULT_PYGRID_ADDRESS,
     conn_type: Type[ClientConnection] = GridHTTPConnection,
@@ -88,6 +90,7 @@ def connect(
     return node
 
 
+@instrument
 def login(
     url: Optional[Union[str, GridURL]] = None,
     port: Optional[int] = None,
@@ -127,11 +130,11 @@ def login(
     if isinstance(url, GridURL):
         grid_url = url
     elif url is None:
-        grid_url = GridURL(host_or_ip="docker-host", port=port, path="/api/v1/status")
-        try:
-            requests.get(str(grid_url), verify=verify_tls())
-        except Exception:
-            grid_url.host_or_ip = "localhost"
+        grid_url = GridURL(host_or_ip="localhost", port=port, path="/api/v1/status")
+        if "CONTAINER_HOST" in os.environ:
+            grid_url = grid_url.as_container_host(
+                container_host=os.environ["CONTAINER_HOST"]
+            )
     else:
         grid_url = GridURL(host_or_ip=url, port=port)
 
@@ -204,6 +207,7 @@ def login(
     return node
 
 
+@instrument
 def register(
     name: Optional[str] = None,
     email: Optional[str] = None,

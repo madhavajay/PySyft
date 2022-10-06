@@ -16,6 +16,7 @@ from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
 
 # relative
+from .....telemetry import instrument
 from ..exceptions import InvalidCredentialsError
 from ..exceptions import UserNotFoundError
 from ..node_table.user import NoSQLSyftUser
@@ -34,6 +35,7 @@ class NotEnoughBudgetException(Exception):
     pass
 
 
+@instrument
 class NoSQLUserManager(NoSQLDatabaseManager):
     """Class to manage user database actions."""
 

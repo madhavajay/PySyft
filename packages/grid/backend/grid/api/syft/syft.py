@@ -75,21 +75,7 @@ def handle_syft_route(data: bytes) -> Any:
     return ""
 
 
-@router.post("", response_model=str)
-def syft_route(request: Request, data: bytes = Depends(get_body)) -> Any:
-    if TRACE_MODE:
-        with trace.get_tracer(syft_route.__module__).start_as_current_span(
-            syft_route.__qualname__,
-            context=extract(request.headers),
-            kind=trace.SpanKind.SERVER,
-        ):
-            return handle_syft_route(data=data)
-    else:
-        return handle_syft_route(data=data)
-
-
-@router.post("/stream", response_model=str)
-def syft_stream(data: bytes = Depends(get_body)) -> Any:
+def handle_syft_stream_route(data: bytes) -> Any:
     if settings.STREAM_QUEUE:
         print("Queuing streaming message for processing on worker node")
         try:
@@ -108,3 +94,29 @@ def syft_stream(data: bytes = Depends(get_body)) -> Any:
         else:
             raise Exception("MessageWithReply not supported on the stream endpoint")
     return ""
+
+
+@router.post("", response_model=str)
+def syft_route(request: Request, data: bytes = Depends(get_body)) -> Any:
+    if TRACE_MODE:
+        with trace.get_tracer(syft_route.__module__).start_as_current_span(
+            syft_route.__qualname__,
+            context=extract(request.headers),
+            kind=trace.SpanKind.SERVER,
+        ):
+            return handle_syft_route(data=data)
+    else:
+        return handle_syft_route(data=data)
+
+
+@router.post("/stream", response_model=str)
+def syft_stream(request: Request, data: bytes = Depends(get_body)) -> Any:
+    if TRACE_MODE:
+        with trace.get_tracer(syft_stream.__module__).start_as_current_span(
+            syft_stream.__qualname__,
+            context=extract(request.headers),
+            kind=trace.SpanKind.SERVER,
+        ):
+            return handle_syft_stream_route(data=data)
+    else:
+        return handle_syft_stream_route(data=data)
