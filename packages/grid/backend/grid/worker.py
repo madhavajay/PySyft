@@ -37,14 +37,14 @@ def msg_without_reply(self, obj_msg: Any) -> None:  # type: ignore
         )
 
 
-@celery_app.task
-def network_connect_self_task() -> None:
-    network_connect_self()
+# @celery_app.task
+# def network_connect_self_task() -> None:
+#     network_connect_self()
 
 
-@celery_app.task
-def domain_reconnect_network_task() -> None:
-    domain_reconnect_network()
+# @celery_app.task
+# def domain_reconnect_network_task() -> None:
+#     domain_reconnect_network()
 
 
 def domain_reconnect_network() -> None:
@@ -87,39 +87,39 @@ def network_connect_self() -> None:
     _ = node.recv_immediate_msg_with_reply(msg=msg).message
 
 
-@celery_app.on_after_configure.connect
-def add_cleanup_blob_store_periodic_task(sender, **kwargs) -> None:  # type: ignore
-    celery_app.add_periodic_task(
-        3600,  # Run every hour
-        cleanup_incomplete_uploads_from_blob_store.s(),
-        name="Clean incomplete uploads in Seaweed",
-        queue="main-queue",
-        options={"queue": "main-queue"},
-    )
+# @celery_app.on_after_configure.connect
+# def add_cleanup_blob_store_periodic_task(sender, **kwargs) -> None:  # type: ignore
+#     celery_app.add_periodic_task(
+#         3600,  # Run every hour
+#         cleanup_incomplete_uploads_from_blob_store.s(),
+#         name="Clean incomplete uploads in Seaweed",
+#         queue="main-queue",
+#         options={"queue": "main-queue"},
+#     )
 
 
-if settings.NODE_TYPE.lower() == "network":
-    network_connect_self()
+# if settings.NODE_TYPE.lower() == "network":
+#     network_connect_self()
 
-    @celery_app.on_after_configure.connect
-    def add_network_connect_self_periodic_task(sender, **kwargs) -> None:  # type: ignore
-        celery_app.add_periodic_task(
-            settings.NETWORK_CHECK_INTERVAL,  # Run every second
-            network_connect_self_task.s(),
-            name="Connect Network VPN to itself",
-            queue="main-queue",
-            options={"queue": "main-queue"},
-        )
+#     @celery_app.on_after_configure.connect
+#     def add_network_connect_self_periodic_task(sender, **kwargs) -> None:  # type: ignore
+#         celery_app.add_periodic_task(
+#             settings.NETWORK_CHECK_INTERVAL,  # Run every second
+#             network_connect_self_task.s(),
+#             name="Connect Network VPN to itself",
+#             queue="main-queue",
+#             options={"queue": "main-queue"},
+#         )
 
 
-if settings.NODE_TYPE.lower() == "domain":
+# if settings.NODE_TYPE.lower() == "domain":
 
-    @celery_app.on_after_configure.connect
-    def add_domain_reconnect_periodic_task(sender, **kwargs) -> None:  # type: ignore
-        celery_app.add_periodic_task(
-            settings.DOMAIN_CHECK_INTERVAL,  # Run every second
-            domain_reconnect_network_task.s(),
-            name="Reconnect Domain to Network VPN",
-            queue="main-queue",
-            options={"queue": "main-queue"},
-        )
+#     @celery_app.on_after_configure.connect
+#     def add_domain_reconnect_periodic_task(sender, **kwargs) -> None:  # type: ignore
+#         celery_app.add_periodic_task(
+#             settings.DOMAIN_CHECK_INTERVAL,  # Run every second
+#             domain_reconnect_network_task.s(),
+#             name="Reconnect Domain to Network VPN",
+#             queue="main-queue",
+#             options={"queue": "main-queue"},
+#         )

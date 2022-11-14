@@ -58,6 +58,11 @@ def publish(
     is_linear: bool = True,
     private: bool = True,
 ) -> np.ndarray:
+    print("\n\n===>>> vectorize publish", "tensor", tensor)
+    print("\n\n===>>> vectorize publish", "ledger", ledger)
+    print("\n\n===>>> vectorize publish", "sigma", sigma)
+    print("\n\n===>>> vectorize publish", "is_linear", is_linear)
+    print("\n\n===>>> vectorize publish", "private", private)
     """
     This method applies Individual Differential Privacy (IDP) as defined in
     https://arxiv.org/abs/2008.11193
@@ -113,15 +118,23 @@ def publish(
             f"Undefined behaviour for data subjects type: {type(tensor.data_subjects)}"
         )
 
+    print("\n\n===>>> calculate_bounds_for_mechanism", "value", value)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "min_val_array", min_val_array)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "max_val_array", max_val_array)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "sigma", sigma)
     l2_norms, l2_norm_bounds, sigmas, coeffs = calculate_bounds_for_mechanism(
         value_array=value,
         min_val_array=min_val_array,
         max_val_array=max_val_array,
         sigma=sigma,
     )
+    print("\n\n===>>> calculate_bounds_for_mechanism", "l2_norms", l2_norms)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "l2_norm_bounds", l2_norm_bounds)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "sigmas", sigmas)
+    print("\n\n===>>> calculate_bounds_for_mechanism", "coeffs", coeffs)
 
     # its important that its the same type so that eq comparisons below dont break
-    zeros_like = jnp.zeros_like(value)
+    zeros_like = jnp.zeros_like(tensor.child)
 
     # this prevents us from running in an infinite loop
     previous_budget = None
@@ -130,14 +143,14 @@ def publish(
     # if we dont return below we will terminate if the tensor gets replaced with zeros
     prev_tensor = None
 
-    while can_reduce_further(value=value, zeros_like=zeros_like):
+    while can_reduce_further(value=tensor.child, zeros_like=zeros_like):
         if prev_tensor is None:
-            prev_tensor = value
+            prev_tensor = tensor.child
         else:
-            if (prev_tensor == value).all():  # type: ignore
+            if (prev_tensor == tensor.child).all():  # type: ignore
                 raise Exception("Tensor has not changed and is not all zeros")
             else:
-                prev_tensor = value
+                prev_tensor = tensor.child
 
         if is_linear:
             lipschitz_bounds = coeffs.copy()
@@ -155,7 +168,16 @@ def publish(
         # Step 2: Calculate the epsilon spend for this query
 
         # rdp_constant = all terms in Theorem. 2.7 or 2.8 of https://arxiv.org/abs/2008.11193 EXCEPT alpha
+        print(
+            "\n\n===>>> compute_rdp_constant",
+            "rdp_params",
+            rdp_params,
+            "private",
+            private,
+        )
         rdp_constants = compute_rdp_constant(rdp_params, private=private)
+        print("\n\n===>>> rdp_constants", rdp_constants)
+
         print("Rdp constants", rdp_constants)
         all_epsilons = ledger._get_epsilon_spend(
             rdp_constants
@@ -169,6 +191,8 @@ def publish(
         epsilon_spend = max(
             all_epsilons
         )  # This is the epsilon spend for the QUERY, a single float.
+
+        print("\n\n===>>> epsilon_spend", epsilon_spend)
 
         if not isinstance(epsilon_spend, float):
             epsilon_spend = float(epsilon_spend)
@@ -203,7 +227,7 @@ def publish(
         # Step 4: Path 1 - If the User has enough Privacy Budget, we just add noise,
         # deduct budget, and return the result.
         if has_budget:
-            original_output = value
+            original_output = tensor.child
 
             # We sample noise from a cryptographically secure distribution
             # TODO: Replace with discrete gaussian distribution instead of regular
@@ -214,6 +238,8 @@ def publish(
                     for _ in range(original_output.size)
                 ]
             ).reshape(original_output.shape)
+
+            print("\n\n===>>> noise", noise)
 
             # The user spends their privacy budget before getting the result
             attempts = 0
@@ -239,11 +265,33 @@ def publish(
 
             # The RDP constants are adjusted to account for the amount of exposure every
             # data subject's data has had.
+            print(
+                "\n\n===>>> ledger.update_rdp_constants", "rdp_constants", rdp_constants
+            )
+            print(
+                "\n\n===>>> ledger.update_rdp_constants",
+                "input_entities",
+                input_entities,
+            )
             ledger.update_rdp_constants(
                 query_constants=rdp_constants, entity_ids_query=input_entities
             )
             ledger._write_ledger()
-            return original_output + noise
+            print(
+                "\n\n===>>> returning published results",
+                "original_output",
+                original_output,
+            )
+            print("\n\n===>>> returning published results", "noise", noise)
+            print(
+                "\n\n===>>> returning published results",
+                "original_output + noise",
+                original_output + noise,
+            )
+            final_result = original_output + noise
+            print("\n\n===>>> final_result", type(final_result), final_result)
+
+            return np.array(original_output + noise)
 
         # Step 4: Path 2 - User doesn't have enough privacy budget.
         elif not has_budget:
@@ -263,26 +311,61 @@ def publish(
             # Step 4.2: Figure out which Tensors in the Source dictionary have those data subjects
 
             # create a seperate iterable of the keys so they can be mutated below
+            print("\n\n===>>> tensor", type(tensor), tensor)
+            print("\n\n===>>> tensor.sources", type(tensor.sources), tensor.sources)
+            print(
+                "\n\n===>>> tensor.sources.sources",
+                type(
+                    getattr(tensor.sources, "sources", None),
+                ),
+                getattr(tensor.sources, "sources", None),
+            )
+
+            print("\n\n===>>> tensor.sources id", id(tensor.sources))
             filtered_sourcetree = deepcopy(tensor.sources)
+            print("\n\n===>>> filtered_sourcetree", filtered_sourcetree)
+            print("\n\n===>>> filtered_sourcetree id", id(filtered_sourcetree))
             input_tensors = list(filtered_sourcetree.values())
+            print("\n\n===>>> input_tensors", input_tensors)
 
             parent_branch = [
                 filtered_sourcetree for _ in input_tensors
             ]  # TODO: Ensure this isn't deepcopying!
 
+            print("\n\n===>>> parent_branch", parent_branch)
+
             # relative
             from ..tensor.autodp.gamma_tensor import GammaTensor
 
             # ATTENTION: is this the same as tensor.sources.items() ?
+
+            print(
+                "\n\n===>>> zip(parent_branch, input_tensors)",
+                zip(parent_branch, input_tensors),
+            )
+
             for parent_state, input_tensor in zip(parent_branch, input_tensors):
+                print("\n\n===>>> looping")
+                print(
+                    "\n\n===>>> parent_state, input_tensor", parent_state, input_tensor
+                )
+                print(
+                    "\n\n===>>> len(parent_branch), len(input_tensors)",
+                    len(parent_branch),
+                    len(input_tensors),
+                )
 
                 if isinstance(input_tensor, GammaTensor):
                     if (
                         input_tensor.func_str == GAMMA_TENSOR_OP.NOOP.value
                     ):  # This is raw, unprocessed private data. Filter if eps spend > PB!
                         # Calculate epsilon spend for this tensor
+                        print(
+                            "\n\n===>>> input_tensor",
+                            "input_tensor.func_str == GAMMA_TENSOR_OP.NOOP.value",
+                        )
                         l2_norms = jnp.sqrt(jnp.sum(jnp.square(input_tensor.child)))
-
+                        print("\n\n===>>> l2_norms", l2_norms)
                         rdp_params = RDPParams(
                             sigmas=sigmas,
                             l2_norms=l2_norms,
@@ -290,6 +373,7 @@ def publish(
                             Ls=lipschitz_bounds,
                             coeffs=coeffs,
                         )
+                        print("\n\n===>>> rdp_params", rdp_params)
 
                         # Privacy loss associated with this private data specifically
                         epsilon = max(
@@ -299,13 +383,19 @@ def publish(
                                 )
                             )
                         )
+                        print("\n\n===>>> epsilon", epsilon)
 
                         # Filter if > privacy budget
                         if jnp.isnan(epsilon):
                             raise Exception("Epsilon is NaN")
 
                         if epsilon > privacy_budget:
+                            print(
+                                "\n\n===>>> epsilon > privacy_budget",
+                                epsilon > privacy_budget,
+                            )
                             filtered_tensor = input_tensor.filtered()
+                            print("\n\n===>>> filtered_tensor", filtered_tensor)
 
                             # Replace the original tensor with this filtered one
                             # remove the original state id
@@ -316,14 +406,25 @@ def publish(
                             # executed as a tuple
                             # see def _truediv(state: dict) -> jax.numpy.DeviceArray:
                             # in gamma_functions.py
-
+                            print(
+                                "\n\n===>>> parent_state keys before",
+                                parent_state.keys(),
+                            )
                             del parent_state[input_tensor.id]
 
                             # add the new zeroed state id tensor
                             parent_state[filtered_tensor.id] = filtered_tensor
+                            print(
+                                "\n\n===>>> parent_state keys after",
+                                parent_state.keys(),
+                            )
                         # If epsilon <= privacy budget, we don't need to do anything -
                         # the user has enough PB to use the data
                     else:
+                        print(
+                            "\n\n===>>> input_tensor",
+                            "NOT input_tensor.func_str == GAMMA_TENSOR_OP.NOOP.value",
+                        )
                         # Is this supposed to search the entire state tree with no_op
                         # data nodes being the leaves?
 
@@ -331,11 +432,16 @@ def publish(
                         # now that we no longer use recursion, I don't think this will
                         # work so we might want to have a stack / queue above to
                         # explore the frontier
+                        print("\n\n===>>> input_tensors len before", len(input_tensors))
                         input_tensors += list(input_tensor.sources.values())
+                        print("\n\n===>>> input_tensors len after", len(input_tensors))
+                        print("\n\n===>>> parent_branch len before", len(parent_branch))
                         parent_branch += [
                             input_tensor.sources for _ in input_tensor.sources.values()
                         ]
+                        print("\n\n===>>> parent_branch len after", len(parent_branch))
                 else:
+                    print("\n\n===>>> input_tensor", "NOT GAMMATENSOR")
                     # This is a public value, we don't touch 'em.
                     continue
 
@@ -345,7 +451,9 @@ def publish(
             # ATTENTION: When we swap state we need to handle the base case so that
             # the .child gets replaced not the .source (state) otherwise it never
             # terminates
+            print("\n\n===>>> tensor before swap", tensor)
             tensor = tensor.swap_state(filtered_sourcetree)
+            print("\n\n===>>> tensor after swap", tensor)
             print("tensor.child before restart: ", type(tensor.child), tensor.child)
             print("About to publish again with filtered source_tree!")
 
@@ -363,12 +471,14 @@ def publish(
         else:
             raise Exception
 
+    print("\n\n===>>> returning absolute noise", "last tensor value was", tensor)
     noise = np.asarray(
         [secrets.SystemRandom().gauss(0, sigma) for _ in range(zeros_like.size)]
     ).reshape(zeros_like.shape)
     zeros = np.zeros_like(
         a=np.array([]), dtype=zeros_like.dtype, shape=zeros_like.shape
     )
+    print("\n\n===>>> returning noise", "noise", noise)
     return zeros + noise
 
 

@@ -107,16 +107,22 @@ class RDPParams:
 
 def get_unique_data_subjects(data_subjects_query: np.ndarray) -> np.ndarray:
     # This might look horribly wrong, but .sum() returns all the unique DS for a DataSubjectArray ~ Ishan
-    return sorted(list(data_subjects_query.sum()))
+    print("\n\n===>>> get_unique_data_subjects", data_subjects_query)
+    result = sorted(list(data_subjects_query.sum()))
+    print("\n\n===>>> get_unique_data_subjects", result)
+    return result
 
 
 def convert_dsa_to_index_array(
     data_subject_array: np.ndarray,
 ) -> Tuple[np.ndarray, int]:
     """Convert data subject array to data subject index array."""
+    print("\n\n===>>> convert_dsa_to_index_array", data_subject_array)
 
     unique_data_subjects = get_unique_data_subjects(data_subject_array)
+    print("\n\n===>>> unique_data_subjects", unique_data_subjects)
     max_entity = len(unique_data_subjects)
+    print("\n\n===>>> max_entity", max_entity)
 
     input_entities_indexes_list: List[np.ndarray] = []
 
@@ -124,12 +130,23 @@ def convert_dsa_to_index_array(
         # Create a mask where the current data subject is present
         data_subject = DataSubjectArray([data_subject])
         ds_mask = np.isin(data_subject_array, data_subject)
+        print(
+            "\n\n===>>> ",
+            "np.isin data_subject",
+            data_subject,
+            "data_subject_array",
+            data_subject_array,
+        )
+        print("\n\n===>>> ", "np.isin ds_mask", ds_mask)
         input_entity_indexes = ds_mask * (
             np.ones_like(data_subject_array, np.int64) * (data_subject_idx + 1)
         )
         input_entities_indexes_list.append(input_entity_indexes)
+    print("\n\n===>>> ", "input_entities_indexes_list", input_entities_indexes_list)
 
     input_entities_indexes: np.ndarray = np.stack(input_entities_indexes_list)
+
+    print("\n\n===>>> ", "input_entities_indexes", input_entities_indexes)
 
     return input_entities_indexes, max_entity
 
@@ -140,35 +157,96 @@ def first_try_branch(
     rdp_constants: np.ndarray,
     entity_ids_query: np.ndarray,
 ) -> jax.numpy.DeviceArray:
-
+    # [0.0045 0.0045 0.0045 0.0045 0.0045 0.0045 0.0045 0.0045 0.0045 0.0045]
+    # [0.0225 0.     0.     0.     0.     0.     0.     0.     0.     0.    ]
+    # [DataSubjectArray: {' nes', 'Other Asia'}
+    print("\n\n===>>> first_try_branch", "constant", constant)
+    print("\n\n===>>> first_try_branch", "rdp_constants", rdp_constants)
+    print("\n\n===>>> first_try_branch", "entity_ids_query", entity_ids_query)
     input_entities_indexes, max_entity = convert_dsa_to_index_array(entity_ids_query)
 
+    print(
+        "\n\n===>>> input_entities_indexes",
+        "max_entity",
+        input_entities_indexes,
+        max_entity,
+    )
+
     if max_entity < len(rdp_constants):
+        print("\n\n===>>> if max_entity < len(rdp_constants)")
         # Take only the constants values where current data subject is present
+        print(
+            "\n\n===>>> constant.take(input_entities_indexes)",
+            constant.take(input_entities_indexes),
+        )
+        print(
+            "\n\n===>>> rdp_constants.take(input_entities_indexes)",
+            rdp_constants.take(input_entities_indexes),
+        )
         summed_constant = constant.take(input_entities_indexes) + rdp_constants.take(
             input_entities_indexes
         )
+        print("\n\n===>>> summed_constant", summed_constant)
 
         # Set rpd constants for given data subjects
+        print(
+            "\n\n===>>> IF before update rdp_constants",
+            type(rdp_constants),
+            rdp_constants,
+        )
         rdp_constants[input_entities_indexes] = summed_constant
+        print(
+            "\n\n===>>> IF after update rdp_constants",
+            type(rdp_constants),
+            rdp_constants,
+        )
     else:
+        print("\n\n===>>> ELSE (if max_entity < len(rdp_constants))")
         pad_length = max_entity - len(rdp_constants) + 1
         rdp_constants = jnp.concatenate([rdp_constants, jnp.zeros(shape=pad_length)])
+        print("\n\n===>>> pad rdp_constants", rdp_constants)
 
         # Take only the constants values where current data subject is present
+        print(
+            "\n\n===>>> constant.take(input_entities_indexes)",
+            constant.take(input_entities_indexes),
+        )
+        print(
+            "\n\n===>>> rdp_constants.take(input_entities_indexes)",
+            rdp_constants.take(input_entities_indexes),
+        )
         summed_constant = constant.take(input_entities_indexes) + rdp_constants.take(
             input_entities_indexes
         )
+        print("\n\n===>>> summed_constant", summed_constant)
 
         # Set rpd constants for given data subjects
         # jax.interpreters.xla._DeviceArray does not support item assignment
+        print(
+            "\n\n===>>> E before update rdp_constants",
+            type(rdp_constants),
+            rdp_constants,
+        )
         rdp_constants = rdp_constants.at[input_entities_indexes].set(summed_constant)
+        print(
+            "\n\n===>>> E after update rdp_constants",
+            type(rdp_constants),
+            rdp_constants,
+        )
 
+    print("\n\n===>>> rdp_constants", rdp_constants)
     return rdp_constants
 
 
 @partial(jax.jit, static_argnums=1)
 def compute_rdp_constant(rdp_params: RDPParams, private: bool) -> jax.numpy.DeviceArray:
+    print(
+        "\n\n===>>> INSIDE compute_rdp_constant",
+        "rdp_params",
+        rdp_params,
+        "private",
+        private,
+    )
     squared_Ls = rdp_params.Ls**2
     squared_sigma = rdp_params.sigmas**2
 
@@ -178,8 +256,12 @@ def compute_rdp_constant(rdp_params: RDPParams, private: bool) -> jax.numpy.Devi
     else:
         # bounds is computed on the metadata
         squared_l2 = rdp_params.l2_norm_bounds**2
-
-    return (squared_Ls * squared_l2 / (2 * squared_sigma)) * rdp_params.coeffs
+    print("\n\n===>>> INSIDE squared_Ls * squared_l2", squared_Ls * squared_l2)
+    print("\n\n===>>> INSIDE (2 * squared_sigma)", (2 * squared_sigma))
+    print("\n\n===>>> INSIDE rdp_params.coeffs", rdp_params.coeffs)
+    result = (squared_Ls * squared_l2 / (2 * squared_sigma)) * rdp_params.coeffs
+    print("\n\n===>>> INSIDE compute_rdp_constant", "result", result)
+    return result
 
 
 @jax.jit
@@ -352,6 +434,8 @@ class DataSubjectLedger(AbstractDataSubjectLedger):
     def update_rdp_constants(
         self, query_constants: jnp.DeviceArray, entity_ids_query: jnp.DeviceArray
     ) -> None:
+        print("\n\n===>>> update_rdp_constants", "query_constants", query_constants)
+        print("\n\n===>>> update_rdp_constants", "entity_ids_query", entity_ids_query)
         if self._rdp_constants.size == 0:
             self._rdp_constants = np.zeros_like(
                 np.asarray(query_constants, query_constants.dtype)
@@ -374,7 +458,9 @@ class DataSubjectLedger(AbstractDataSubjectLedger):
 
     def _get_epsilon_spend(self, rdp_constants: np.ndarray) -> np.ndarray:
         # rdp_constants_lookup = (rdp_constants - 1).astype(np.int64)
+        print("\n\n===>>> _get_epsilon_spend", "rdp_constants", rdp_constants)
         rdp_constants_lookup = convert_constants_to_indices(rdp_constants)
+        print("\n\n===>>> rdp_constants_lookup", rdp_constants_lookup)
         try:
             # needed as np.int64 to use take
             eps_spend = jax.jit(jnp.take)(
@@ -396,6 +482,7 @@ class DataSubjectLedger(AbstractDataSubjectLedger):
             eps_spend = jax.jit(jnp.take)(
                 self._cache_constant2epsilon, rdp_constants_lookup
             )
+        print("\n\n===>>> eps_spend", eps_spend)
         return eps_spend
 
     def _calculate_mask_for_current_budget(
