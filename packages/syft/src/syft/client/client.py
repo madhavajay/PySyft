@@ -185,8 +185,13 @@ class HTTPConnection(NodeConnection):
 
     def _make_get(self, path: str, params: dict | None = None) -> bytes:
         url = self.url.with_path(path)
+        headers = {}
+        if self.url.endswith(".local"):
+            headers = {"Host": str(self.url)}
+            url = INTERNAL_PROXY_URL
+
         response = self.session.get(
-            str(url), verify=verify_tls(), proxies={}, params=params
+            str(url), verify=verify_tls(), headers=headers, proxies={}, params=params
         )
         if response.status_code != 200:
             raise requests.ConnectionError(
@@ -205,8 +210,13 @@ class HTTPConnection(NodeConnection):
         data: bytes | None = None,
     ) -> bytes:
         url = self.url.with_path(path)
+        headers = {}
+        if self.url.endswith(".local"):
+            headers = {"Host": str(self.url)}
+            url = INTERNAL_PROXY_URL
+
         response = self.session.post(
-            str(url), verify=verify_tls(), json=json, proxies={}, data=data
+            str(url), verify=verify_tls(), headers=headers, json=json, proxies={}, data=data
         )
         if response.status_code != 200:
             raise requests.ConnectionError(
@@ -304,6 +314,7 @@ class HTTPConnection(NodeConnection):
 
     def make_call(self, signed_call: SignedSyftAPICall) -> Any | SyftError:
         msg_bytes: bytes = _serialize(obj=signed_call, to_bytes=True)
+        # use make post?
         response = requests.post(  # nosec
             url=str(self.api_url),
             data=msg_bytes,

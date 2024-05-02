@@ -206,7 +206,9 @@ class BlobRetrievalByURL(BlobRetrieval):
         try:
             if (is_blob_file := issubclass(self.type_, BlobFileType)) and stream:
                 return syft_iter_content(blob_url, chunk_size)
-
+            # TODO: refactor to get a connection with to_blob_route
+            # then the _make_get code will translate the .local url to a proxy url
+            # with Host header
             response = requests.get(str(blob_url), stream=stream)  # nosec
             resp_content = response.content
             response.raise_for_status()

@@ -50,7 +50,7 @@ def make_routes(worker: Worker) -> APIRouter:
     async def get_body(request: Request) -> bytes:
         return await request.body()
 
-    def _blob_url(peer_uid: UID, presigned_url: str) -> str:
+    def _blob_url(peer_uid: UID, presigned_url: str) -> NodeConnection:
         # relative
         from ..service.network.node_peer import route_to_connection
 
@@ -58,9 +58,10 @@ def make_routes(worker: Worker) -> APIRouter:
         peer = network_service.stash.get_by_uid(worker.verify_key, peer_uid).ok()
         peer_node_route = peer.pick_highest_priority_route()
         connection = route_to_connection(route=peer_node_route)
-        url = connection.to_blob_route(presigned_url)
+        #         url = connection.to_blob_route(presigned_url)
+        return connection
 
-        return str(url)
+        
 
     @router.get("/stream/{peer_uid}/{url_path}/", name="stream")
     async def stream(peer_uid: str, url_path: str) -> StreamingResponse:
@@ -71,10 +72,12 @@ def make_routes(worker: Worker) -> APIRouter:
 
         peer_uid_parsed = UID.from_string(peer_uid)
 
-        url = _blob_url(peer_uid=peer_uid_parsed, presigned_url=url_path_parsed)
+        connection = _blob_url(peer_uid=peer_uid_parsed)
 
         try:
-            resp = requests.get(url=url, stream=True)  # nosec
+            # add code 
+            resp = connection._make_get(url_path_parsed, stream=True) # nosec
+            # resp = requests.get(url=url, stream=True)  # nosec
             resp.raise_for_status()
         except requests.RequestException:
             raise HTTPException(404, "Failed to retrieve data from domain.")
